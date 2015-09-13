@@ -16,6 +16,7 @@ module VIC_top(
 	
 	inout wire [`DATA_BW-1:0]		bus_data,
 
+	//should be reg
 	output wire						nVICFIQ,
 	output wire						nVICIRQ,
 	output wire [`ADDR_BW-1:0]		VICVECTADDROUT
@@ -95,10 +96,52 @@ module VIC_top(
 
 
 
-	reg[31:0]						reg_inner_nvIRQ;
-	always @(*) begin
-		
-	end
+	wire[31:0]						wire_inner_nvIRQ;
+	wire[31:0]						wire_inner_nvIRQx[0:15];
+	wire[31:0]						wire_inner_vIRQ;
+
+	assign wire_inner_nvIRQ[0] = 32'h00000001 << regs_VICVectCntl[0][4:0];
+	assign wire_inner_nvIRQ[1] = 32'h00000001 << regs_VICVectCntl[1][4:0];
+	assign wire_inner_nvIRQ[2] = 32'h00000001 << regs_VICVectCntl[2][4:0];
+	assign wire_inner_nvIRQ[3] = 32'h00000001 << regs_VICVectCntl[3][4:0];
+	assign wire_inner_nvIRQ[4] = 32'h00000001 << regs_VICVectCntl[4][4:0];
+	assign wire_inner_nvIRQ[5] = 32'h00000001 << regs_VICVectCntl[5][4:0];
+	assign wire_inner_nvIRQ[6] = 32'h00000001 << regs_VICVectCntl[6][4:0];
+	assign wire_inner_nvIRQ[7] = 32'h00000001 << regs_VICVectCntl[7][4:0];
+	assign wire_inner_nvIRQ[8] = 32'h00000001 << regs_VICVectCntl[8][4:0];
+	assign wire_inner_nvIRQ[9] = 32'h00000001 << regs_VICVectCntl[9][4:0];
+	assign wire_inner_nvIRQ[10] = 32'h00000001 << regs_VICVectCntl[10][4:0];
+	assign wire_inner_nvIRQ[11] = 32'h00000001 << regs_VICVectCntl[11][4:0];
+	assign wire_inner_nvIRQ[12] = 32'h00000001 << regs_VICVectCntl[12][4:0];
+	assign wire_inner_nvIRQ[13] = 32'h00000001 << regs_VICVectCntl[13][4:0];
+	assign wire_inner_nvIRQ[14] = 32'h00000001 << regs_VICVectCntl[14][4:0];
+	assign wire_inner_nvIRQ[15] = 32'h00000001 << regs_VICVectCntl[15][4:0];
+	
+	assign wire_inner_vIRQ = wire_inner_nvIRQ[0] |
+                                wire_inner_nvIRQ[1] |
+                                wire_inner_nvIRQ[2] |
+                                wire_inner_nvIRQ[3] |
+                                wire_inner_nvIRQ[4] |
+                                wire_inner_nvIRQ[5] |
+                                wire_inner_nvIRQ[6] |
+                                wire_inner_nvIRQ[7] |
+                                wire_inner_nvIRQ[8] |
+                                wire_inner_nvIRQ[9] |
+                                wire_inner_nvIRQ[10] |
+                                wire_inner_nvIRQ[11] |
+                                wire_inner_nvIRQ[12] |
+                                wire_inner_nvIRQ[13] |
+                                wire_inner_nvIRQ[14] |
+                                wire_inner_nvIRQ[15];
+                                
+	assign wire_inner_nvIRQ = (~regs_VICIntSelect) | (~wire_inner_vIRQ);
+
+
+
+	wire[3:0]				wire_IRQArbiter_HandlerNum;
+	wire[31:0]				wire_inner_vIRQVectAddr;
+
+	assign wire_inner_vIRQVectAddr = regs_VICVectAddr_[wire_IRQArbiter_HandlerNum];
 
 
 endmodule
