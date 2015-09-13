@@ -4,6 +4,9 @@ module VIC_top(
 	input wire						rst,
 	input wire						clk,
 
+	input wire						VICFIQEn,
+	input wire						VICIRQEn,
+
 	input wire [`VIC_INTW-1:0]		vic_intr,
 	input wire [`ADDR_BW-1:0]		bus_addr,
 	input wire						bus_wr,
@@ -19,11 +22,17 @@ module VIC_top(
 	);
 
 	//0xFFFF F000 RO
-	reg[31:0]						regs_VICIRQStatus;
+	//int_gen->IRQStatus
+	//reg[31:0]						regs_VICIRQStatus;
+	
 	//0xFFFF F004 RO
-	reg[31:0]						regs_VICFIQStatus;
+	//int_gen->FIQStatus
+	//reg[31:0]						regs_VICFIQStatus;
+	
 	//0xFFFF F008 RO
-	reg[31:0]						regs_VICRawIntr;
+	//int_gen->intgen_reg_VICRawIntr
+	//reg[31:0]						regs_VICRawIntr;
+	
 	//0xFFFF F00C RW
 	reg[31:0]						regs_VICIntSelect;
 	//0xFFFF F010 RW
@@ -73,6 +82,7 @@ module VIC_top(
 		end
 
 		//bus_en == 1'b1 bus enable
+		//VICSoftInt & VICSoftIntClear should be handled here
 		if (bus_en == `BusEnable) begin
 			if (bus_wr == `BusWriteable) begin
 				//write regs
@@ -85,6 +95,10 @@ module VIC_top(
 
 
 
+	reg[31:0]						reg_inner_nvIRQ;
+	always @(*) begin
+		
+	end
 
 
 endmodule
