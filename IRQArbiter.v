@@ -1,4 +1,4 @@
-`include defs.v
+`include "defs.v"
 
 
 module IRQArbiter(
@@ -13,13 +13,13 @@ module IRQArbiter(
 
 	assign wire_IRQArbiter_IsnvIRQ = (vIRQRequest == 16'h0000) ? nvIRQRequest : 1'b0;
 
-	assign wire_VICIRQRequest = ([vIRQRequest, nvIRQRequest] == 0) ? 1'b0 : 1'b1;
+	assign wire_VICIRQRequest = ({vIRQRequest, nvIRQRequest} == {17{1'b0}}) ? 1'b0 : 1'b1;
 
 	reg[3:0]			IntrNum;
 	assign wire_IRQArbiter_HandlerNum = IntrNum;
 
-	always @(*) begin
-		case (vIRQRequest)
+	always @(vIRQRequest) begin
+		casex (vIRQRequest)
 			16'bxxxxxxxxxxxxxxx1:
 				IntrNum <= 4'h0;
 			16'bxxxxxxxxxxxxxx10:
@@ -59,7 +59,7 @@ module IRQArbiter(
 				IntrNum <= 4'h0;
 		endcase
 	end
-	
+
 
 
 endmodule

@@ -1,7 +1,7 @@
-`include defs.v
+`include "defs.v"
 
 module int_gen(
-	input wire				rst,
+	// input wire				rst,
 	input wire[31:0]		top_reg_VICSoftInt,
 	input wire[31:0]		top_reg_VICSoftIntClear,
 	input wire[31:0]		top_reg_VICIntSelect,
@@ -35,8 +35,8 @@ module int_gen(
 	assign IntrEnabled = reg_VICRawIntr & top_reg_VICIntEnable;
 
 	//VICIntSelect : 1 means FIQ
-	assign FIQStatus = IntrEnabled | top_reg_VICIntSelect;
-	assign IRQStatus = IntrEnabled | (~top_reg_VICIntSelect);
+	assign FIQStatus = IntrEnabled & top_reg_VICIntSelect;
+	assign IRQStatus = IntrEnabled & (~top_reg_VICIntSelect);
 
 
 endmodule

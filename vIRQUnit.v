@@ -1,4 +1,4 @@
-`include defs.v
+`include "defs.v"
 
 module vIRQUnit(
 	input wire[31:0]		top_reg_VICVectCntlx,

@@ -1,4 +1,4 @@
-`include defs.v
+`include "defs.v"
 
 module VIC_top(
 	input wire						rst,
@@ -13,7 +13,7 @@ module VIC_top(
 	input wire						bus_en,
 
 	input wire						is_priviledge,
-	
+
 	inout wire [`DATA_BW-1:0]		bus_data,
 
 	//should be reg
@@ -25,15 +25,15 @@ module VIC_top(
 	//0xFFFF F000 RO
 	//int_gen->IRQStatus
 	//reg[31:0]						regs_VICIRQStatus;
-	
+
 	//0xFFFF F004 RO
 	//int_gen->FIQStatus
 	//reg[31:0]						regs_VICFIQStatus;
-	
+
 	//0xFFFF F008 RO
 	//int_gen->intgen_reg_VICRawIntr
 	//reg[31:0]						regs_VICRawIntr;
-	
+
 	//0xFFFF F00C RW
 	reg[31:0]						regs_VICIntSelect;
 	//0xFFFF F010 RW
@@ -116,7 +116,7 @@ module VIC_top(
 	assign wire_inner_nvIRQ[13] = 32'h00000001 << regs_VICVectCntl[13][4:0];
 	assign wire_inner_nvIRQ[14] = 32'h00000001 << regs_VICVectCntl[14][4:0];
 	assign wire_inner_nvIRQ[15] = 32'h00000001 << regs_VICVectCntl[15][4:0];
-	
+
 	assign wire_inner_vIRQ = wire_inner_nvIRQ[0] |
                                 wire_inner_nvIRQ[1] |
                                 wire_inner_nvIRQ[2] |
@@ -133,7 +133,7 @@ module VIC_top(
                                 wire_inner_nvIRQ[13] |
                                 wire_inner_nvIRQ[14] |
                                 wire_inner_nvIRQ[15];
-                                
+
 	assign wire_inner_nvIRQ = (~regs_VICIntSelect) | (~wire_inner_vIRQ);
 
 
