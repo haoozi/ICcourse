@@ -10,6 +10,6 @@ module nvIRQUnit(
 );
 
 	////////////////////////////////////////////
-	assign nvIRQRequest = IRQStatus & reg_top_inner_nvIRQ;
+	assign nvIRQRequest = |(IRQStatus & reg_top_inner_nvIRQ);
 
 endmodule
