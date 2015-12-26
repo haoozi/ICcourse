@@ -16,7 +16,6 @@ module vic_top(
 	);
 
 	wire bus_en;
-
 	assign bus_en = pselVIC & (penable);
 
 	VIC_total VIC(
@@ -25,8 +24,6 @@ module vic_top(
 		.vic_intrsource(VICIntSource),	.bus_addr(paddr),
 		.bus_wr(pwrite),			.bus_en(bus_en),
 		.bus_data_i(pwdata),		.bus_data_o(prdata),
-
-		//input wire						is_priviledge,
 
 		.nVICFIQ(nvicfiq),			.nVICIRQ(nvicirq)
 		);
