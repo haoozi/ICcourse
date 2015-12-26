@@ -52,9 +52,8 @@ module IRQArbiter(
 				IntrNum <= 4'he;
 			16'b1000000000000000:
 				IntrNum <= 4'hf;
-			16'b0000000000000000: begin
-					IntrNum <= 4'h0;
-				end
+			16'b0000000000000000:
+				IntrNum <= 4'h0;
 			default:
 				IntrNum <= 4'h0;
 		endcase

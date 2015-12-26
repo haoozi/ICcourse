@@ -6,7 +6,7 @@ module VIC_total(
 
 	input wire						VICFIQEn,
 	input wire						VICIRQEn,
-	input wire [31:0]				vic_intr,
+	input wire [31:0]				vic_intrsource,
 
 	input wire [31:0]				bus_addr,
 	input wire						bus_wr,
@@ -14,16 +14,15 @@ module VIC_total(
 	input wire [31:0]				bus_data_i,
 	output wire [31:0]				bus_data_o,
 
-	input wire						is_priviledge,
+	//input wire						is_priviledge,
 
-	//should be reg
 	output wire						nVICFIQ,
-	output wire						nVICIRQ,
-	output wire[31:0]				VICVectAddrOut
+	output wire						nVICIRQ
+	//output wire[31:0]				VICVectAddrOut
 	);
 
 	//VICIRQStatus
-
+	reg[31:0]						vic_intr;
 
 
 	//0xFFFF F000 RO
@@ -71,164 +70,19 @@ module VIC_total(
 
 	wire[31:0]						wire_inner_IRQEnabled;
 
-	wire[31:0]						bus_dout;
+	//wire[31:0]						bus_dout;
 
 	reg[31:0]						reg_bus_dout;
 
 	reg 							reg_nVICIRQ;
 
 	assign nVICIRQ = reg_nVICIRQ;
-	assign VICVectAddrOut = regs_VICVectAddr;
+	//assign VICVectAddrOut = regs_VICVectAddr;
 
 	assign 	regs_VICSoftIntClear = 32'h00000000;
 	assign  regs_VICIntEnClr = 32'h00000000;
 
 	assign bus_data_o = reg_bus_dout;
-
-	//posedge : as BUS_EN = 1
-	always @(bus_en or rst) begin
-		if (rst == `RstEnable) begin
-			begin
-				//all set to zero
-				reg_bus_dout <= 1'b0;
-			end
-			disable;
-		end
-
-		//bus_en == 1'b1 bus enable
-		//VICSoftInt & VICSoftIntClear should be handled here
-		if (bus_en == `BusEnable) begin
-			if (bus_wr == `BusWrite) begin
-				//write regs
-				if ((regs_VICProtection != 32'h00000000) && (is_priviledge != `InPriviledge)) begin
-				end else begin
-					casex (bus_addr)
-						32'hfffff000 : begin
-								//RO
-							end
-
-						32'hfffff004: begin
-								//RO
-							end
-
-						32'hfffff008 : begin
-								//RO
-							end
-
-						32'hfffff00c : begin
-								regs_VICIntSelect <= bus_data_i;
-							end
-
-						32'hfffff010 : begin
-								regs_VICIntEnable <= bus_data_i;
-							end
-
-						32'hfffff014 : begin
-								//regs_VICIntEnable <= bus_data_i;
-								regs_VICIntEnable <= regs_VICIntEnable & (~bus_data_i);
-							end
-
-						32'hfffff018 : begin
-								regs_VICSoftInt <= bus_data_i;
-							end
-
-						32'hfffff01c : begin
-								//WO
-								regs_VICSoftInt <= regs_VICSoftInt & (~bus_data_i);
-							end
-
-						32'hfffff020 : begin
-								regs_VICProtection <= bus_data_i;
-							end
-
-						32'hfffff030 : begin
-								// ?
-								//regs_VICVectAddr <= bus_data_i;
-							end
-
-						32'hfffff034 : begin
-								regs_VICDefVectAddr <= bus_data_i;
-							end
-
-						32'hfffff1xx : begin
-								//Aahhhhhhhhhh, is this correct?
-								regs_VICVectAddr_[bus_addr[7:2]] <= bus_data_i;
-							end
-
-						32'hfffff200 : begin
-								regs_VICVectCntl[bus_addr[7:2]] <= bus_data_i;
-							end
-
-						default : begin
-
-							end
-					endcase
-				end
-			end else begin
-				//read regs
-				casex (bus_addr)
-					32'hfffff000 : begin
-							reg_bus_dout <= wire_inner_IRQEnabled;
-						end
-
-					32'hfffff004: begin
-							reg_bus_dout <= regs_VICIntSelect | regs_VICIntSelect;
-						end
-
-					32'hfffff008 : begin
-							reg_bus_dout <= regs_VICRawIntr;
-						end
-
-					32'hfffff00c : begin
-							reg_bus_dout <= regs_VICIntSelect;
-						end
-
-					32'hfffff010 : begin
-							reg_bus_dout <= regs_VICIntEnable;
-						end
-
-					32'hfffff014 : begin
-							//WO
-							reg_bus_dout <= 32'h00000000;
-						end
-
-					32'hfffff018 : begin
-							reg_bus_dout <= regs_VICSoftInt;
-						end
-
-					32'hfffff01c : begin
-							//WO
-							reg_bus_dout <= 32'h00000000;
-						end
-
-					32'hfffff020 : begin
-							reg_bus_dout <= regs_VICProtection;
-						end
-
-					32'hfffff030 : begin
-							reg_bus_dout <= regs_VICVectAddr;
-						end
-
-					32'hfffff034 : begin
-							reg_bus_dout <= regs_VICDefVectAddr;
-						end
-
-					32'hfffff1xx : begin
-							//Aahhhhhhhhhh, is this correct?
-							reg_bus_dout <= regs_VICVectAddr_[bus_addr[7:2]];
-						end
-
-					32'hfffff200 : begin
-							reg_bus_dout <= regs_VICVectCntl[bus_addr[7:2]];
-						end
-
-					default : begin
-							reg_bus_dout <= 32'h00000000;
-						end
-				endcase
-			end
-		end
-	end
 
 
 
@@ -254,21 +108,21 @@ module VIC_total(
 	assign wire_inner_vIRQx[15] = 32'h00000001 << regs_VICVectCntl[15][4:0];
 
 	assign wire_inner_vIRQ = wire_inner_vIRQx[0] |
-                                wire_inner_vIRQx[1] |
-                                wire_inner_vIRQx[2] |
-                                wire_inner_vIRQx[3] |
-                                wire_inner_vIRQx[4] |
-                                wire_inner_vIRQx[5] |
-                                wire_inner_vIRQx[6] |
-                                wire_inner_vIRQx[7] |
-                                wire_inner_vIRQx[8] |
-                                wire_inner_vIRQx[9] |
-                                wire_inner_vIRQx[10] |
-                                wire_inner_vIRQx[11] |
-                                wire_inner_vIRQx[12] |
-                                wire_inner_vIRQx[13] |
-                                wire_inner_vIRQx[14] |
-                                wire_inner_vIRQx[15];
+								wire_inner_vIRQx[1] |
+								wire_inner_vIRQx[2] |
+								wire_inner_vIRQx[3] |
+								wire_inner_vIRQx[4] |
+								wire_inner_vIRQx[5] |
+								wire_inner_vIRQx[6] |
+								wire_inner_vIRQx[7] |
+								wire_inner_vIRQx[8] |
+								wire_inner_vIRQx[9] |
+								wire_inner_vIRQx[10] |
+								wire_inner_vIRQx[11] |
+								wire_inner_vIRQx[12] |
+								wire_inner_vIRQx[13] |
+								wire_inner_vIRQx[14] |
+								wire_inner_vIRQx[15];
 
 	//assign wire_inner_nvIRQ = ((~regs_VICIntSelect) | (~wire_inner_vIRQ)) & regs_VICIntEnable;
 
@@ -295,10 +149,10 @@ module VIC_total(
 
 
 
-	wire[3:0]				wire_IRQArbiter_HandlerNum;
-	wire[31:0]				wire_inner_vIRQVectAddr;
+	//wire[3:0]				wire_IRQArbiter_HandlerNum;
+	//wire[31:0]				wire_inner_vIRQVectAddr;
 
-	assign wire_inner_vIRQVectAddr = regs_VICVectAddr_[wire_IRQArbiter_HandlerNum];
+	//assign wire_inner_vIRQVectAddr = regs_VICVectAddr_[wire_IRQArbiter_HandlerNum];
 
 
 
@@ -337,7 +191,7 @@ module VIC_total(
 	FIQUnit FIQContol(
 		.VICFIQEn(VICFIQEn),
 		.FIQStatus(conn_FIQStatus),
-		wire_VICFIQRequest(VICFIQRequest)
+		.wire_VICFIQRequest(VICFIQRequest)
 	);
 
 	nvIRQUnit nvIRQContol(
@@ -468,26 +322,265 @@ module VIC_total(
 		.wire_VICIRQRequest(conn_VICIRQRequest)
 		);
 
-	always @(conn_VICIRQRequest or rst) begin
-		if (rst == `RstEnable) begin
-			reg_nVICIRQ <= 1'b1;
-			regs_VICDefVectAddr = 32'h00000000;
-		end
+	reg[31:0]					VICVectAddr_delay;
 
-		if (conn_VICIRQRequest == 1'b1) begin
-			//vIRQRequest
-			if (conn_IRQ_IsnvIRQ == 1'b0) begin
-				regs_VICVectAddr = regs_VICVectAddr_[conn_IRQHandlerNum];
-				reg_nVICIRQ = 1'b0;
-			end else begin
-				//nvIRQRequest
-				regs_VICVectAddr = regs_VICDefVectAddr;
-				reg_nVICIRQ = 1'b0;
+	/*always @(posedge clk) begin
+		VICVectAddr_delay <= regs_VICVectAddr;
+	end*/
+	always @(bus_en) begin
+		if (bus_en == 1'b1) begin
+			VICVectAddr_delay <= regs_VICVectAddr;
+			end
+	end
+
+	//posedge : as BUS_EN = 1
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			begin
+				regs_VICIntSelect 			<= `RegRstValue;
+				regs_VICIntEnable 			<= `RegRstValue;
+				regs_VICSoftInt 			<= `RegRstValue;
+				regs_VICProtection 			<= `RegRstValue;
+				//regs_VICVectAddr 			<= `RegRstValue;
+				regs_VICDefVectAddr			<= `RegRstValue;
+				regs_VICVectAddr_[0]		<= `RegRstValue;
+				regs_VICVectAddr_[1]		<= `RegRstValue;
+				regs_VICVectAddr_[2]		<= `RegRstValue;
+				regs_VICVectAddr_[3]		<= `RegRstValue;
+				regs_VICVectAddr_[4]		<= `RegRstValue;
+				regs_VICVectAddr_[5]		<= `RegRstValue;
+				regs_VICVectAddr_[6]		<= `RegRstValue;
+				regs_VICVectAddr_[7]		<= `RegRstValue;
+				regs_VICVectAddr_[8]		<= `RegRstValue;
+				regs_VICVectAddr_[9]		<= `RegRstValue;
+				regs_VICVectAddr_[10]		<= `RegRstValue;
+				regs_VICVectAddr_[11]		<= `RegRstValue;
+				regs_VICVectAddr_[12]		<= `RegRstValue;
+				regs_VICVectAddr_[13]		<= `RegRstValue;
+				regs_VICVectAddr_[14]		<= `RegRstValue;
+				regs_VICVectAddr_[15]		<= `RegRstValue;
+
+				//regs_VICVectCntl[0:15]		<= {16{`RegRstValue}};
+
+				regs_VICVectCntl[0]			<= `RegRstValue;
+				regs_VICVectCntl[1]			<= `RegRstValue;
+				regs_VICVectCntl[2]			<= `RegRstValue;
+				regs_VICVectCntl[3]			<= `RegRstValue;
+				regs_VICVectCntl[4]			<= `RegRstValue;
+				regs_VICVectCntl[5]			<= `RegRstValue;
+				regs_VICVectCntl[6]			<= `RegRstValue;
+				regs_VICVectCntl[7]			<= `RegRstValue;
+				regs_VICVectCntl[8]			<= `RegRstValue;
+				regs_VICVectCntl[9]			<= `RegRstValue;
+				regs_VICVectCntl[10]		<= `RegRstValue;
+				regs_VICVectCntl[11]		<= `RegRstValue;
+				regs_VICVectCntl[12]		<= `RegRstValue;
+				regs_VICVectCntl[13]		<= `RegRstValue;
+				regs_VICVectCntl[14]		<= `RegRstValue;
+				regs_VICVectCntl[15]		<= `RegRstValue;
+
+				reg_bus_dout 				<= `RegRstValue;
+				//reg_nVICIRQ 				<= 1'b1;
 			end
 		end else begin
-			reg_nVICIRQ = 1'b1;
-			regs_VICDefVectAddr = 32'h00000000;
+			//if (clk == 1'b1) begin
+				//bus_en == 1'b1 bus enable
+				//VICSoftInt & VICSoftIntClear should be handled here
+				if (bus_en == `BusEnable) begin
+					if (bus_wr == `BusWrite) begin
+						//write regs
+						//if ((regs_VICProtection != 32'h00000000) && (is_priviledge != `InPriviledge)) begin
+						if (regs_VICProtection != 32'h00000000) begin
+						end else begin
+							casex (bus_addr)
+								32'hfffff000 : begin
+										//RO
+									end
+
+								32'hfffff004: begin
+										//RO
+									end
+
+								32'hfffff008 : begin
+										//RO
+									end
+
+								32'hfffff00c : begin
+										regs_VICIntSelect <= bus_data_i;
+									end
+
+								32'hfffff010 : begin
+										regs_VICIntEnable <= bus_data_i;
+									end
+
+								32'hfffff014 : begin
+										//regs_VICIntEnable <= bus_data_i;
+										regs_VICIntEnable <= regs_VICIntEnable & (~bus_data_i);
+									end
+
+								32'hfffff018 : begin
+										regs_VICSoftInt <= bus_data_i;
+									end
+
+								32'hfffff01c : begin
+										//WO
+										regs_VICSoftInt <= regs_VICSoftInt & (~bus_data_i);
+									end
+
+								32'hfffff020 : begin
+										regs_VICProtection <= bus_data_i;
+									end
+
+								32'hfffff030 : begin
+										// ?
+										//regs_VICVectAddr <= bus_data_i;
+									end
+
+								32'hfffff034 : begin
+										regs_VICDefVectAddr <= bus_data_i;
+									end
+
+								32'hfffff1xx : begin
+										regs_VICVectAddr_[bus_addr[7:2]] <= bus_data_i;
+									end
+
+								32'hfffff2xx : begin
+										regs_VICVectCntl[bus_addr[7:2]] <= bus_data_i;
+									end
+
+								default : begin
+
+									end
+							endcase
+						end
+					end else begin
+						//read regs
+						casex (bus_addr)
+							32'hfffff000 : begin
+									reg_bus_dout <= wire_inner_IRQEnabled;
+								end
+
+							32'hfffff004: begin
+									reg_bus_dout <= regs_VICIntSelect | regs_VICIntSelect;
+								end
+
+							32'hfffff008 : begin
+									reg_bus_dout <= regs_VICRawIntr;
+								end
+
+							32'hfffff00c : begin
+									reg_bus_dout <= regs_VICIntSelect;
+								end
+
+							32'hfffff010 : begin
+									reg_bus_dout <= regs_VICIntEnable;
+								end
+
+							32'hfffff014 : begin
+									//WO
+									reg_bus_dout <= 32'h00000000;
+								end
+
+							32'hfffff018 : begin
+									reg_bus_dout <= regs_VICSoftInt;
+								end
+
+							32'hfffff01c : begin
+									//WO
+									reg_bus_dout <= 32'h00000000;
+								end
+
+							32'hfffff020 : begin
+									reg_bus_dout <= regs_VICProtection;
+								end
+
+							32'hfffff030 : begin
+									reg_bus_dout <= VICVectAddr_delay;
+								end
+
+							32'hfffff034 : begin
+									reg_bus_dout <= regs_VICDefVectAddr;
+								end
+
+							32'hfffff1xx : begin
+									//Aahhhhhhhhhh, is this correct?
+									reg_bus_dout <= regs_VICVectAddr_[bus_addr[7:2]];
+								end
+
+							32'hfffff200 : begin
+									reg_bus_dout <= regs_VICVectCntl[bus_addr[7:2]];
+								end
+
+							default : begin
+									reg_bus_dout <= 32'h00000000;
+								end
+						endcase
+					end
+				end
+			//end
 		end
+	end
+
+	reg[31:0]					origin_VICIntrSource;
+	always @(*) begin
+		if (rst == `RstEnable) begin
+			vic_intr <= 32'h00000000;
+			reg_nVICIRQ <= 1'b1;
+			//regs_VICDefVectAddr = 32'h00000000;
+			origin_VICIntrSource <= 32'h00000000;
+			regs_VICVectAddr <= 32'h00000000;
+		end
+
+		//vic_intr
+		//vic_intrsource
+		if ((bus_en == `BusEnable) && (bus_wr != `BusWrite) && bus_addr == 32'hFFFFF030 && conn_VICIRQRequest == 1'b1) begin
+			if (conn_VICIRQRequest == 1'b1) begin
+				vic_intr[regs_VICVectCntl[conn_IRQHandlerNum][4:0]] <= 1'b0;
+			end else begin
+				vic_intr <= vic_intr & (~regs_VICRawIntr);
+			end
+		end else begin
+			if (origin_VICIntrSource != vic_intrsource) begin
+				//process interrupt
+				if ((vic_intr == 32'h00000000) && (origin_VICIntrSource != 32'h00000000)) begin
+					vic_intr <= origin_VICIntrSource ^ vic_intrsource;
+				end else begin
+					vic_intr <= vic_intrsource;
+				end
+				origin_VICIntrSource <= vic_intrsource;
+			end
+
+			if (conn_VICIRQRequest == 1'b1) begin
+				//vIRQRequest
+				//?isnvirq something wrong
+				if (conn_IRQ_IsnvIRQ == 1'b0) begin
+					regs_VICVectAddr <= regs_VICVectAddr_[conn_IRQHandlerNum];
+					reg_nVICIRQ <= 1'b0;
+				end else begin
+					//nvIRQRequest
+					regs_VICVectAddr <= regs_VICDefVectAddr;
+					reg_nVICIRQ <= 1'b0;
+				end
+			end else begin
+				reg_nVICIRQ <= 1'b1;
+				regs_VICVectAddr <= 32'h00000000;
+			end
+		end
+
+		/*if (conn_VICIRQRequest == 1'b1) begin
+			//vIRQRequest
+			if (conn_IRQ_IsnvIRQ == 1'b0) begin
+				regs_VICVectAddr <= regs_VICVectAddr_[conn_IRQHandlerNum];
+				reg_nVICIRQ <= 1'b0;
+			end else begin
+				//nvIRQRequest
+				regs_VICVectAddr <= regs_VICDefVectAddr;
+				reg_nVICIRQ <= 1'b0;
+			end
+		end else begin
+			reg_nVICIRQ <= 1'b1;
+			regs_VICDefVectAddr <= 32'h00000000;
+		end*/
 	end
 
 endmodule

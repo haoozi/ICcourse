@@ -8,7 +8,7 @@ module FIQUnit(
 );
 
 	//VICFIQRequest : 1 is valid
-	assign wire_VICFIQRequest = (VICFIQEn == 1'b1) ?  |FIQStatus : 1'b0;
+	assign wire_VICFIQRequest = (VICFIQEn == 1'b1) ?  (|FIQStatus) : 1'b0;
 
 
 endmodule

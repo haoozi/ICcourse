@@ -8,3 +8,5 @@
 `define RstEnable		1'b0
 
 `define InPriviledge	1'b1
+
+`define RegRstValue		32'h00000000
